@@ -9,6 +9,11 @@ import {
 import { z } from "zod";
 import { GeminiImageClient } from "./gemini.js";
 
+const imageInputSchema = z.object({
+  data: z.string().describe("Base64 encoded image data"),
+  mimeType: z.string().describe("MIME type of the image (e.g., image/png, image/jpeg)"),
+});
+
 const generateImageSchema = z.object({
   prompt: z.string().describe("Description of the image to generate"),
   aspectRatio: z
@@ -21,6 +26,22 @@ const generateImageSchema = z.object({
     .optional()
     .default("1K")
     .describe("Resolution of the generated image"),
+  model: z
+    .string()
+    .optional()
+    .describe("Gemini model to use (default: gemini-3-pro-image-preview)"),
+  images: z
+    .array(imageInputSchema)
+    .optional()
+    .describe("Optional reference images to guide generation"),
+});
+
+const editImageSchema = z.object({
+  prompt: z.string().describe("Instructions for how to edit the image(s)"),
+  images: z
+    .array(imageInputSchema)
+    .min(1)
+    .describe("One or more images to edit"),
   model: z
     .string()
     .optional()
@@ -48,7 +69,7 @@ export function createServer(apiKey: string): Server {
         {
           name: "generate_image",
           description:
-            "Generate an image using Google Gemini. Returns a base64-encoded image that can be displayed or saved.",
+            "Generate an image using Google Gemini. Optionally provide reference images to guide the generation style or content. Returns a base64-encoded image.",
           inputSchema: {
             type: "object" as const,
             properties: {
@@ -74,8 +95,54 @@ export function createServer(apiKey: string): Server {
                   "Gemini model (gemini-3-pro-image-preview, gemini-2.5-flash-preview-05-20, or gemini-2.0-flash-exp)",
                 default: "gemini-3-pro-image-preview",
               },
+              images: {
+                type: "array",
+                description: "Optional reference images to guide generation",
+                items: {
+                  type: "object",
+                  properties: {
+                    data: { type: "string", description: "Base64 encoded image data" },
+                    mimeType: { type: "string", description: "MIME type (e.g., image/png)" },
+                  },
+                  required: ["data", "mimeType"],
+                },
+              },
             },
             required: ["prompt"],
+          },
+        },
+        {
+          name: "edit_image",
+          description:
+            "Edit one or more images using Google Gemini. Provide images and instructions for how to modify them. Returns a base64-encoded image.",
+          inputSchema: {
+            type: "object" as const,
+            properties: {
+              prompt: {
+                type: "string",
+                description: "Instructions for how to edit the image(s)",
+              },
+              images: {
+                type: "array",
+                description: "One or more images to edit",
+                items: {
+                  type: "object",
+                  properties: {
+                    data: { type: "string", description: "Base64 encoded image data" },
+                    mimeType: { type: "string", description: "MIME type (e.g., image/png)" },
+                  },
+                  required: ["data", "mimeType"],
+                },
+                minItems: 1,
+              },
+              model: {
+                type: "string",
+                description:
+                  "Gemini model (gemini-3-pro-image-preview, gemini-2.5-flash-preview-05-20, or gemini-2.0-flash-exp)",
+                default: "gemini-3-pro-image-preview",
+              },
+            },
+            required: ["prompt", "images"],
           },
         },
       ],
@@ -109,6 +176,42 @@ export function createServer(apiKey: string): Server {
             {
               type: "text" as const,
               text: `Failed to generate image: ${message}`,
+            },
+          ],
+        };
+      }
+    }
+
+    if (request.params.name === "edit_image") {
+      try {
+        const args = editImageSchema.parse(request.params.arguments);
+        const result = await client.generateImage({
+          prompt: args.prompt,
+          images: args.images,
+          model: args.model,
+        });
+
+        return {
+          content: [
+            {
+              type: "image" as const,
+              data: result.base64Data,
+              mimeType: result.mimeType,
+            },
+            ...(result.description
+              ? [{ type: "text" as const, text: result.description }]
+              : []),
+          ],
+        };
+      } catch (error) {
+        const message =
+          error instanceof Error ? error.message : "Unknown error occurred";
+        return {
+          isError: true,
+          content: [
+            {
+              type: "text" as const,
+              text: `Failed to edit image: ${message}`,
             },
           ],
         };

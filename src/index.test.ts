@@ -33,14 +33,17 @@ describe("MCP Server", () => {
   }
 
   describe("listTools", () => {
-    it("should list generate_image tool", async () => {
+    it("should list generate_image and edit_image tools", async () => {
       const { client } = await createTestClient();
       const result = await client.listTools();
 
-      expect(result.tools).toHaveLength(1);
+      expect(result.tools).toHaveLength(2);
       expect(result.tools[0].name).toBe("generate_image");
       expect(result.tools[0].description).toContain("Google Gemini");
       expect(result.tools[0].inputSchema.required).toContain("prompt");
+      expect(result.tools[1].name).toBe("edit_image");
+      expect(result.tools[1].description).toContain("Edit");
+      expect(result.tools[1].inputSchema.required).toContain("images");
     });
 
     it("should have correct input schema for generate_image", async () => {
@@ -53,6 +56,19 @@ describe("MCP Server", () => {
       expect(properties.prompt).toBeDefined();
       expect(properties.aspectRatio).toBeDefined();
       expect(properties.imageSize).toBeDefined();
+      expect(properties.images).toBeDefined();
+    });
+
+    it("should have correct input schema for edit_image", async () => {
+      const { client } = await createTestClient();
+      const result = await client.listTools();
+
+      const tool = result.tools[1];
+      const properties = tool.inputSchema.properties as Record<string, unknown>;
+
+      expect(properties.prompt).toBeDefined();
+      expect(properties.images).toBeDefined();
+      expect(properties.model).toBeDefined();
     });
   });
 
@@ -212,6 +228,185 @@ describe("MCP Server", () => {
       expect(result.content[0]).toMatchObject({
         type: "text",
         text: expect.stringContaining("Failed to generate image"),
+      });
+    });
+  });
+
+  describe("callTool - generate_image with reference images", () => {
+    it("should generate image with reference images", async () => {
+      const mockResponse = {
+        candidates: [
+          {
+            content: {
+              parts: [
+                {
+                  inlineData: {
+                    mimeType: "image/png",
+                    data: VALID_BASE64_PNG,
+                  },
+                },
+              ],
+            },
+          },
+        ],
+      };
+
+      vi.mocked(fetch).mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve(mockResponse),
+      } as Response);
+
+      const { client } = await createTestClient();
+      const result = await client.callTool({
+        name: "generate_image",
+        arguments: {
+          prompt: "Generate in this style",
+          images: [
+            { data: VALID_BASE64_PNG, mimeType: "image/png" },
+          ],
+        },
+      });
+
+      expect(result.isError).toBeFalsy();
+      expect(result.content[0]).toEqual({
+        type: "image",
+        data: VALID_BASE64_PNG,
+        mimeType: "image/png",
+      });
+
+      // Verify images were sent in request
+      const callArgs = vi.mocked(fetch).mock.calls[0];
+      const body = JSON.parse(callArgs[1]?.body as string);
+      expect(body.contents[0].parts).toHaveLength(2);
+      expect(body.contents[0].parts[1].inlineData).toBeDefined();
+    });
+  });
+
+  describe("callTool - edit_image", () => {
+    it("should edit image successfully", async () => {
+      const mockResponse = {
+        candidates: [
+          {
+            content: {
+              parts: [
+                { text: "Edited image" },
+                {
+                  inlineData: {
+                    mimeType: "image/png",
+                    data: VALID_BASE64_PNG,
+                  },
+                },
+              ],
+            },
+          },
+        ],
+      };
+
+      vi.mocked(fetch).mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve(mockResponse),
+      } as Response);
+
+      const { client } = await createTestClient();
+      const result = await client.callTool({
+        name: "edit_image",
+        arguments: {
+          prompt: "Add sunglasses to this image",
+          images: [
+            { data: VALID_BASE64_PNG, mimeType: "image/png" },
+          ],
+        },
+      });
+
+      expect(result.isError).toBeFalsy();
+      expect(result.content).toHaveLength(2);
+      expect(result.content[0]).toEqual({
+        type: "image",
+        data: VALID_BASE64_PNG,
+        mimeType: "image/png",
+      });
+    });
+
+    it("should edit with multiple images", async () => {
+      const mockResponse = {
+        candidates: [
+          {
+            content: {
+              parts: [
+                {
+                  inlineData: {
+                    mimeType: "image/png",
+                    data: VALID_BASE64_PNG,
+                  },
+                },
+              ],
+            },
+          },
+        ],
+      };
+
+      vi.mocked(fetch).mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve(mockResponse),
+      } as Response);
+
+      const { client } = await createTestClient();
+      const result = await client.callTool({
+        name: "edit_image",
+        arguments: {
+          prompt: "Combine these images",
+          images: [
+            { data: VALID_BASE64_PNG, mimeType: "image/png" },
+            { data: VALID_BASE64_PNG, mimeType: "image/jpeg" },
+          ],
+        },
+      });
+
+      expect(result.isError).toBeFalsy();
+
+      // Verify multiple images were sent
+      const callArgs = vi.mocked(fetch).mock.calls[0];
+      const body = JSON.parse(callArgs[1]?.body as string);
+      expect(body.contents[0].parts).toHaveLength(3); // prompt + 2 images
+    });
+
+    it("should return error when no images provided to edit_image", async () => {
+      const { client } = await createTestClient();
+      const result = await client.callTool({
+        name: "edit_image",
+        arguments: {
+          prompt: "Edit this",
+          images: [], // Empty array
+        },
+      });
+
+      expect(result.isError).toBe(true);
+      expect(result.content[0]).toMatchObject({
+        type: "text",
+        text: expect.stringContaining("Failed to edit image"),
+      });
+    });
+
+    it("should return error on API failure", async () => {
+      vi.mocked(fetch).mockResolvedValueOnce({
+        ok: false,
+        status: 500,
+        text: () => Promise.resolve("Internal Server Error"),
+      } as Response);
+
+      const { client } = await createTestClient();
+      const result = await client.callTool({
+        name: "edit_image",
+        arguments: {
+          prompt: "Edit this",
+          images: [{ data: VALID_BASE64_PNG, mimeType: "image/png" }],
+        },
+      });
+
+      expect(result.isError).toBe(true);
+      expect(result.content[0]).toMatchObject({
+        type: "text",
+        text: expect.stringContaining("Failed to edit image"),
       });
     });
   });

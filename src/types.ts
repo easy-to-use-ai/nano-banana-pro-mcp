@@ -34,11 +34,17 @@ export interface GeminiResponse {
   };
 }
 
+export interface ImageInput {
+  data: string;      // base64 encoded image data
+  mimeType: string;  // e.g., "image/png", "image/jpeg"
+}
+
 export interface GenerateImageOptions {
   prompt: string;
   aspectRatio?: GeminiImageConfig["aspectRatio"];
   imageSize?: GeminiImageConfig["imageSize"];
   model?: string;
+  images?: ImageInput[];  // optional reference images
 }
 
 export interface GeneratedImage {

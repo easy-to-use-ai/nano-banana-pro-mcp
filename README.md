@@ -114,7 +114,7 @@ Get a free Gemini API key from [Google AI Studio](https://aistudio.google.com/ap
 
 ### generate_image
 
-Generate an image from a text prompt.
+Generate an image from a text prompt. Optionally provide reference images to guide the style or content.
 
 **Parameters:**
 - `prompt` (required): Description of the image to generate
@@ -124,10 +124,33 @@ Generate an image from a text prompt.
   - `gemini-2.0-flash-exp` - Widely available fallback
 - `aspectRatio` (optional): `"1:1"` | `"3:4"` | `"4:3"` | `"9:16"` | `"16:9"`
 - `imageSize` (optional): `"1K"` | `"2K"` | `"4K"` (only for image-specific models)
+- `images` (optional): Array of reference images to guide generation
+  - Each image: `{ data: "base64...", mimeType: "image/png" }`
 
-**Example prompt:**
+**Example prompts:**
 ```
-Generate an image of a sunset over mountains with dramatic orange and purple clouds
+Generate an image of a sunset over mountains
+
+Generate a logo in the style of this reference image [with image attached]
+```
+
+### edit_image
+
+Edit one or more images based on instructions.
+
+**Parameters:**
+- `prompt` (required): Instructions for how to edit the image(s)
+- `images` (required): Array of images to edit
+  - Each image: `{ data: "base64...", mimeType: "image/png" }`
+- `model` (optional): Gemini model to use (default: `gemini-3-pro-image-preview`)
+
+**Example prompts:**
+```
+Add sunglasses to this photo
+
+Remove the background from this image
+
+Combine these two images into one scene
 ```
 
 ---

@@ -27,7 +27,7 @@ export class GeminiImageClient {
   }
 
   async generateImage(options: GenerateImageOptions): Promise<GeneratedImage> {
-    const { prompt, aspectRatio, imageSize } = options;
+    const { prompt, aspectRatio, imageSize, images } = options;
     const model = options.model || DEFAULT_MODEL;
 
     // Validate model against allowlist to prevent URL manipulation
@@ -40,10 +40,27 @@ export class GeminiImageClient {
     // Only certain models support imageConfig (aspect ratio, size)
     const supportsImageConfig = model.includes("image") || model.includes("imagen");
 
+    // Build request parts array: text prompt + optional input images
+    const requestParts: Array<{ text: string } | { inlineData: { mimeType: string; data: string } }> = [
+      { text: prompt }
+    ];
+
+    // Add input images if provided (for reference or editing)
+    if (images && images.length > 0) {
+      for (const img of images) {
+        requestParts.push({
+          inlineData: {
+            mimeType: img.mimeType,
+            data: img.data,
+          },
+        });
+      }
+    }
+
     const requestBody: GeminiRequest = {
       contents: [
         {
-          parts: [{ text: prompt }],
+          parts: requestParts,
         },
       ],
       generationConfig: {
@@ -83,17 +100,17 @@ export class GeminiImageClient {
       throw new Error("No image generated - empty response from Gemini");
     }
 
-    const parts = data.candidates[0].content.parts;
+    const responseParts = data.candidates[0].content.parts;
     let imageData: GeneratedImage | null = null;
     let description: string | undefined;
 
-    for (const part of parts) {
-      if (part.inlineData) {
+    for (const part of responseParts) {
+      if ("inlineData" in part && part.inlineData) {
         imageData = {
           mimeType: part.inlineData.mimeType,
           base64Data: part.inlineData.data,
         };
-      } else if (part.text) {
+      } else if ("text" in part && part.text) {
         description = part.text;
       }
     }
