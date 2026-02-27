@@ -1,7 +1,7 @@
 # nano-banana-pro-mcp
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/easy-to-use-ai/nano-banana-pro-mcp/main/assets/banner.png" alt="Nano Banana Pro MCP Banner" width="100%">
+  <img src="https://raw.githubusercontent.com/easy-to-use-ai/nano-banana-pro-mcp/main/assets/cover.png" alt="Nano Banana Pro MCP Banner" width="100%">
 </p>
 
 <p align="center">
