@@ -48,7 +48,7 @@ const generateImageSchema = z.object({
   model: z
     .string()
     .optional()
-    .describe("Gemini model to use (default: gemini-3-pro-image-preview)"),
+    .describe("Gemini model to use (default: gemini-3.1-flash-image-preview)"),
   images: z
     .array(imageInputSchema)
     .optional()
@@ -68,7 +68,7 @@ const editImageSchema = z.object({
   model: z
     .string()
     .optional()
-    .describe("Gemini model to use (default: gemini-3-pro-image-preview)"),
+    .describe("Gemini model to use (default: gemini-3.1-flash-image-preview)"),
   outputPath: z
     .string()
     .optional()
@@ -87,7 +87,7 @@ const describeImageSchema = z.object({
   model: z
     .string()
     .optional()
-    .describe("Gemini model to use (default: gemini-3-pro-image-preview)"),
+    .describe("Gemini model to use (default: gemini-3.1-flash-image-preview)"),
 });
 
 export function createServer(apiKey: string): Server {
@@ -96,7 +96,7 @@ export function createServer(apiKey: string): Server {
   const server = new Server(
     {
       name: "nano-banana-pro-mcp",
-      version: "1.0.0",
+      version: "2.0.0",
     },
     {
       capabilities: {
@@ -134,8 +134,8 @@ export function createServer(apiKey: string): Server {
               model: {
                 type: "string",
                 description:
-                  "Gemini model (gemini-3-pro-image-preview, gemini-2.5-flash-preview-05-20, or gemini-2.0-flash-exp)",
-                default: "gemini-3-pro-image-preview",
+                  "Gemini model (gemini-3.1-flash-image-preview, gemini-3-pro-image-preview, gemini-2.5-flash-preview-05-20, or gemini-2.0-flash-exp)",
+                default: "gemini-3.1-flash-image-preview",
               },
               images: {
                 type: "array",
@@ -184,8 +184,8 @@ export function createServer(apiKey: string): Server {
               model: {
                 type: "string",
                 description:
-                  "Gemini model (gemini-3-pro-image-preview, gemini-2.5-flash-preview-05-20, or gemini-2.0-flash-exp)",
-                default: "gemini-3-pro-image-preview",
+                  "Gemini model (gemini-3.1-flash-image-preview, gemini-3-pro-image-preview, gemini-2.5-flash-preview-05-20, or gemini-2.0-flash-exp)",
+                default: "gemini-3.1-flash-image-preview",
               },
               outputPath: {
                 type: "string",
@@ -222,8 +222,8 @@ export function createServer(apiKey: string): Server {
               model: {
                 type: "string",
                 description:
-                  "Gemini model (gemini-3-pro-image-preview, gemini-2.5-flash-preview-05-20, or gemini-2.0-flash-exp)",
-                default: "gemini-3-pro-image-preview",
+                  "Gemini model (gemini-3.1-flash-image-preview, gemini-3-pro-image-preview, gemini-2.5-flash-preview-05-20, or gemini-2.0-flash-exp)",
+                default: "gemini-3.1-flash-image-preview",
               },
             },
             required: ["images"],

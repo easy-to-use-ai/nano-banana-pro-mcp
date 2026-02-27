@@ -58,7 +58,7 @@ describe("GeminiImageClient", () => {
       });
 
       expect(fetch).toHaveBeenCalledWith(
-        expect.stringContaining("gemini-3-pro-image-preview:generateContent"),
+        expect.stringContaining("gemini-3.1-flash-image-preview:generateContent"),
         expect.objectContaining({
           method: "POST",
           headers: { "Content-Type": "application/json" },

@@ -10,12 +10,13 @@ const GEMINI_API_BASE = "https://generativelanguage.googleapis.com/v1beta/models
 
 // Allowed models for image generation
 const ALLOWED_MODELS = [
-  "gemini-3-pro-image-preview",    // Nano Banana Pro (highest quality)
-  "gemini-2.5-flash-preview-05-20", // Nano Banana (fast)
-  "gemini-2.0-flash-exp",           // Widely available fallback
+  "gemini-3.1-flash-image-preview",  // Nano Banana 2 (latest, recommended)
+  "gemini-3-pro-image-preview",      // Nano Banana Pro (highest quality)
+  "gemini-2.5-flash-preview-05-20",  // Nano Banana (fast)
+  "gemini-2.0-flash-exp",            // Widely available fallback
 ] as const;
 
-const DEFAULT_MODEL = "gemini-3-pro-image-preview";
+const DEFAULT_MODEL = "gemini-3.1-flash-image-preview";
 
 export class GeminiImageClient {
   private apiKey: string;

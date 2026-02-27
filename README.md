@@ -1,10 +1,14 @@
 # nano-banana-pro-mcp
 
 <p align="center">
-  <img src="assets/logo.png" alt="Nano Banana Pro MCP Logo" width="200">
+  <img src="https://raw.githubusercontent.com/easy-to-use-ai/nano-banana-pro-mcp/main/assets/banner.png" alt="Nano Banana Pro MCP Banner" width="100%">
 </p>
 
-MCP server that enables AI agents like Claude to generate images using Google's Gemini image generation models (including Nano Banana Pro - gemini-3-pro-image-preview).
+<p align="center">
+  <img src="https://raw.githubusercontent.com/easy-to-use-ai/nano-banana-pro-mcp/main/assets/logo.png" alt="Nano Banana Pro MCP Logo" width="120">
+</p>
+
+MCP server that enables AI agents like Claude to generate images using Google's Gemini image generation models, including Nano Banana 2 (`gemini-3.1-flash-image-preview`) and Nano Banana Pro (`gemini-3-pro-image-preview`).
 
 > **Note:** I thought it was cool that Google Antigravity could generate images using nanobanana so I stole the idea.
 
@@ -12,11 +16,11 @@ MCP server that enables AI agents like Claude to generate images using Google's 
 
 Here's Claude Code using the MCP to generate a hero image for a travel landing page:
 
-![Claude Code using nano-banana-pro MCP](assets/example_prompt.png)
+![Claude Code using nano-banana-pro MCP](https://raw.githubusercontent.com/easy-to-use-ai/nano-banana-pro-mcp/main/assets/example_prompt.png)
 
 And the beautiful result:
 
-![Generated travel page with Santorini image](assets/example_generated.png)
+![Generated travel page with Santorini image](https://raw.githubusercontent.com/easy-to-use-ai/nano-banana-pro-mcp/main/assets/example_generated.png)
 
 ---
 
@@ -25,7 +29,7 @@ And the beautiful result:
 ### Claude Code CLI
 
 ```bash
-claude mcp add nano-banana-pro --env GEMINI_API_KEY=your_api_key_here -- npx @rafarafarafa/nano-banana-pro-mcp
+claude mcp add nano-banana-pro --env GEMINI_API_KEY=your_api_key_here -- npx @easyuseai/nano-banana-pro-mcp
 ```
 
 Replace `your_api_key_here` with your actual Gemini API key.
@@ -42,7 +46,7 @@ Add to your Claude Desktop configuration file:
   "mcpServers": {
     "nano-banana-pro": {
       "command": "npx",
-      "args": ["@rafarafarafa/nano-banana-pro-mcp"],
+      "args": ["@easyuseai/nano-banana-pro-mcp"],
       "env": {
         "GEMINI_API_KEY": "your_api_key_here"
       }
@@ -60,7 +64,7 @@ Create or edit `.mcp.json` in your project directory (or `~/.mcp.json` for globa
   "mcpServers": {
     "nano-banana-pro": {
       "command": "npx",
-      "args": ["@rafarafarafa/nano-banana-pro-mcp"],
+      "args": ["@easyuseai/nano-banana-pro-mcp"],
       "env": {
         "GEMINI_API_KEY": "your_api_key_here"
       }
@@ -78,7 +82,7 @@ Create or edit `~/.gemini/settings.json`:
   "mcpServers": {
     "nano-banana-pro": {
       "command": "npx",
-      "args": ["@rafarafarafa/nano-banana-pro-mcp"],
+      "args": ["@easyuseai/nano-banana-pro-mcp"],
       "env": {
         "GEMINI_API_KEY": "your_api_key_here"
       }
@@ -103,7 +107,8 @@ Generate an image from a text prompt. Optionally provide reference images to gui
 
 **Parameters:**
 - `prompt` (required): Description of the image to generate
-- `model` (optional): Gemini model to use (default: `gemini-3-pro-image-preview`)
+- `model` (optional): Gemini model to use (default: `gemini-3.1-flash-image-preview`)
+  - `gemini-3.1-flash-image-preview` - Nano Banana 2 (latest, recommended)
   - `gemini-3-pro-image-preview` - Nano Banana Pro (highest quality)
   - `gemini-2.5-flash-preview-05-20` - Nano Banana (fast)
   - `gemini-2.0-flash-exp` - Widely available fallback
@@ -130,7 +135,7 @@ Edit one or more images based on instructions.
 - `prompt` (required): Instructions for how to edit the image(s)
 - `images` (required): Array of images to edit
   - Each image: `{ data: "base64...", mimeType: "image/png" }`
-- `model` (optional): Gemini model to use (default: `gemini-3-pro-image-preview`)
+- `model` (optional): Gemini model to use (default: `gemini-3.1-flash-image-preview`)
 - `outputPath` (optional): File path to save the edited image (e.g., `/path/to/image.png`)
 
 **Example prompts:**
@@ -150,7 +155,7 @@ Analyze and describe one or more images. Returns text only (no image generation)
 - `images` (required): Array of images to analyze
   - Each image: `{ data: "base64...", mimeType: "image/png" }`
 - `prompt` (optional): Custom analysis prompt (default: general description)
-- `model` (optional): Gemini model to use (default: `gemini-3-pro-image-preview`)
+- `model` (optional): Gemini model to use (default: `gemini-3.1-flash-image-preview`)
 
 **Example prompts:**
 ```

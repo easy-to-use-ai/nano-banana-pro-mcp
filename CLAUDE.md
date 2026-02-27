@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-MCP (Model Context Protocol) server that wraps Google's Gemini 3 Nano Banana Pro image generation API, enabling AI agents to generate images via a standardized tool interface.
+MCP (Model Context Protocol) server that wraps Google's Gemini image generation API (supporting Nano Banana 2 and Nano Banana Pro), enabling AI agents to generate images via a standardized tool interface.
 
 ## Commands
 
@@ -22,7 +22,7 @@ npm start          # Run the MCP server (requires GEMINI_API_KEY env var)
 - `src/gemini.ts` - `GeminiImageClient` class that handles Gemini API requests
 - `src/types.ts` - TypeScript interfaces for Gemini API request/response shapes
 
-The server exposes one tool: `generate_image` with parameters for prompt, aspect ratio, and image size.
+The server exposes three tools: `generate_image`, `edit_image`, and `describe_image` with parameters for prompt, aspect ratio, image size, model selection, etc.
 
 ## Testing
 
