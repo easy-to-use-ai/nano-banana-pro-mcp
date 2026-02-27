@@ -5,41 +5,66 @@
 </p>
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/easy-to-use-ai/nano-banana-pro-mcp/main/assets/logo.png" alt="Nano Banana Pro MCP Logo" width="120">
+  <strong>🔥 Now supports Nano Banana 2 (<code>gemini-3.1-flash-image-preview</code>) — Google's latest and most capable image generation model</strong>
 </p>
 
-MCP server that enables AI agents like Claude to generate images using Google's Gemini image generation models, including Nano Banana 2 (`gemini-3.1-flash-image-preview`) and Nano Banana Pro (`gemini-3-pro-image-preview`).
-
-> **Note:** I thought it was cool that Google Antigravity could generate images using nanobanana so I stole the idea.
-
-## Example
-
-Here's Claude Code using the MCP to generate a hero image for a travel landing page:
-
-![Claude Code using nano-banana-pro MCP](https://raw.githubusercontent.com/easy-to-use-ai/nano-banana-pro-mcp/main/assets/example_prompt.png)
-
-And the beautiful result:
-
-![Generated travel page with Santorini image](https://raw.githubusercontent.com/easy-to-use-ai/nano-banana-pro-mcp/main/assets/example_generated.png)
+<p align="center">
+  <a href="https://www.npmjs.com/package/@easyuseai/nano-banana-pro-mcp"><img src="https://img.shields.io/npm/v/@easyuseai/nano-banana-pro-mcp.svg" alt="npm version"></a>
+  <a href="https://www.npmjs.com/package/@easyuseai/nano-banana-pro-mcp"><img src="https://img.shields.io/npm/dm/@easyuseai/nano-banana-pro-mcp.svg" alt="npm downloads"></a>
+  <a href="https://github.com/easy-to-use-ai/nano-banana-pro-mcp/blob/main/LICENSE"><img src="https://img.shields.io/github/license/easy-to-use-ai/nano-banana-pro-mcp.svg" alt="license"></a>
+</p>
 
 ---
 
-## Installation
+An [MCP (Model Context Protocol)](https://modelcontextprotocol.io/) server that gives AI agents — Claude, Gemini, Codex and more — the power to **generate, edit, and analyze images** through Google's Gemini image generation API.
 
-### Claude Code CLI
+### Why Nano Banana 2?
+
+**Nano Banana 2** (`gemini-3.1-flash-image-preview`) is Google's newest image generation model, bringing significant improvements over its predecessors:
+
+- **Higher fidelity** — sharper details, better color accuracy, and more photorealistic output
+- **Better instruction following** — more accurately interprets complex prompts and compositions
+- **Native text rendering** — generates readable text within images, a major leap forward
+- **Faster generation** — lower latency while delivering superior quality
+- **Multi-image reference** — guide output with reference images for style transfer and consistency
+
+> This MCP server defaults to Nano Banana 2, giving your AI agent access to Google's best image generation capabilities out of the box.
+
+---
+
+## Supported Models
+
+| Model | Alias | Highlights |
+|---|---|---|
+| `gemini-3.1-flash-image-preview` | **Nano Banana 2** ⭐ | Latest & recommended. Best quality, text rendering, fast |
+| `gemini-3-pro-image-preview` | Nano Banana Pro | Highest quality for complex scenes |
+| `gemini-2.5-flash-preview-05-20` | Nano Banana | Balanced speed and quality |
+| `gemini-2.0-flash-exp` | — | Widely available fallback |
+
+---
+
+## Quick Start
+
+### 1. Get a Free API Key
+
+Get your Gemini API key from [Google AI Studio](https://aistudio.google.com/apikey) — it's free.
+
+### 2. Install
+
+Choose your platform:
+
+<details>
+<summary><strong>Claude Code CLI</strong></summary>
 
 ```bash
 claude mcp add nano-banana-pro --env GEMINI_API_KEY=your_api_key_here -- npx @easyuseai/nano-banana-pro-mcp
 ```
+</details>
 
-Replace `your_api_key_here` with your actual Gemini API key.
+<details>
+<summary><strong>Cursor</strong></summary>
 
-### Claude Desktop
-
-Add to your Claude Desktop configuration file:
-
-**macOS**: `~/Library/Application Support/Claude/claude_desktop_config.json`
-**Windows**: `%APPDATA%\Claude\claude_desktop_config.json`
+Add to your Cursor MCP settings (`.cursor/mcp.json`):
 
 ```json
 {
@@ -54,10 +79,15 @@ Add to your Claude Desktop configuration file:
   }
 }
 ```
+</details>
 
-### Codex CLI
+<details>
+<summary><strong>Claude Desktop</strong></summary>
 
-Create or edit `.mcp.json` in your project directory (or `~/.mcp.json` for global config):
+Add to your config file:
+
+- **macOS**: `~/Library/Application Support/Claude/claude_desktop_config.json`
+- **Windows**: `%APPDATA%\Claude\claude_desktop_config.json`
 
 ```json
 {
@@ -72,8 +102,30 @@ Create or edit `.mcp.json` in your project directory (or `~/.mcp.json` for globa
   }
 }
 ```
+</details>
 
-### Gemini CLI
+<details>
+<summary><strong>Codex CLI</strong></summary>
+
+Create or edit `.mcp.json` in your project directory (or `~/.mcp.json` for global):
+
+```json
+{
+  "mcpServers": {
+    "nano-banana-pro": {
+      "command": "npx",
+      "args": ["@easyuseai/nano-banana-pro-mcp"],
+      "env": {
+        "GEMINI_API_KEY": "your_api_key_here"
+      }
+    }
+  }
+}
+```
+</details>
+
+<details>
+<summary><strong>Gemini CLI</strong></summary>
 
 Create or edit `~/.gemini/settings.json`:
 
@@ -90,117 +142,81 @@ Create or edit `~/.gemini/settings.json`:
   }
 }
 ```
+</details>
+
+### 3. Use It
+
+Just ask your AI agent to generate images — it will automatically use the MCP tools.
+
+```
+Generate a hero image of a sunset over Santorini, 16:9 aspect ratio
+
+Edit this photo: add a dramatic sky and warm color grading
+
+Describe what's in this screenshot
+```
 
 ---
 
-## Get an API Key
+## Tools
 
-Get a free Gemini API key from [Google AI Studio](https://aistudio.google.com/apikey).
+### `generate_image`
 
----
+Generate an image from a text description. Optionally provide reference images for style/content guidance.
 
-## Available Tools
+| Parameter | Required | Description |
+|---|---|---|
+| `prompt` | ✅ | Text description of the image to generate |
+| `model` | | Gemini model (default: `gemini-3.1-flash-image-preview`) |
+| `aspectRatio` | | `1:1` · `3:4` · `4:3` · `9:16` · `16:9` |
+| `imageSize` | | `1K` · `2K` · `4K` |
+| `images` | | Reference images `[{ data, mimeType }]` |
+| `outputPath` | | File path to save the image |
 
-### generate_image
+### `edit_image`
 
-Generate an image from a text prompt. Optionally provide reference images to guide the style or content.
+Edit one or more existing images based on instructions.
 
-**Parameters:**
-- `prompt` (required): Description of the image to generate
-- `model` (optional): Gemini model to use (default: `gemini-3.1-flash-image-preview`)
-  - `gemini-3.1-flash-image-preview` - Nano Banana 2 (latest, recommended)
-  - `gemini-3-pro-image-preview` - Nano Banana Pro (highest quality)
-  - `gemini-2.5-flash-preview-05-20` - Nano Banana (fast)
-  - `gemini-2.0-flash-exp` - Widely available fallback
-- `aspectRatio` (optional): `"1:1"` | `"3:4"` | `"4:3"` | `"9:16"` | `"16:9"`
-- `imageSize` (optional): `"1K"` | `"2K"` | `"4K"` (only for image-specific models)
-- `images` (optional): Array of reference images to guide generation
-  - Each image: `{ data: "base64...", mimeType: "image/png" }`
-- `outputPath` (optional): File path to save the generated image (e.g., `/path/to/image.png`)
+| Parameter | Required | Description |
+|---|---|---|
+| `prompt` | ✅ | Editing instructions |
+| `images` | ✅ | Images to edit `[{ data, mimeType }]` |
+| `model` | | Gemini model (default: `gemini-3.1-flash-image-preview`) |
+| `outputPath` | | File path to save the result |
 
-**Example prompts:**
-```
-Generate an image of a sunset over mountains
+### `describe_image`
 
-Generate a logo in the style of this reference image [with image attached]
+Analyze and describe images. Returns text only.
 
-Generate a hero image and save it to ./assets/hero.png
-```
-
-### edit_image
-
-Edit one or more images based on instructions.
-
-**Parameters:**
-- `prompt` (required): Instructions for how to edit the image(s)
-- `images` (required): Array of images to edit
-  - Each image: `{ data: "base64...", mimeType: "image/png" }`
-- `model` (optional): Gemini model to use (default: `gemini-3.1-flash-image-preview`)
-- `outputPath` (optional): File path to save the edited image (e.g., `/path/to/image.png`)
-
-**Example prompts:**
-```
-Add sunglasses to this photo
-
-Remove the background from this image
-
-Combine these two images into one scene
-```
-
-### describe_image
-
-Analyze and describe one or more images. Returns text only (no image generation).
-
-**Parameters:**
-- `images` (required): Array of images to analyze
-  - Each image: `{ data: "base64...", mimeType: "image/png" }`
-- `prompt` (optional): Custom analysis prompt (default: general description)
-- `model` (optional): Gemini model to use (default: `gemini-3.1-flash-image-preview`)
-
-**Example prompts:**
-```
-[default] Describe this image in detail
-
-What objects are in this image?
-
-How many people are in this photo?
-
-What's the dominant color in this image?
-```
+| Parameter | Required | Description |
+|---|---|---|
+| `images` | ✅ | Images to analyze `[{ data, mimeType }]` |
+| `prompt` | | Custom analysis prompt |
+| `model` | | Gemini model (default: `gemini-3.1-flash-image-preview`) |
 
 ---
 
 ## Development
 
-### Setup
-
 ```bash
-npm install
-npm run build
-```
-
-### Testing
-
-```bash
-npm test              # Run unit tests
-npm run test:watch    # Run tests in watch mode
-npm run typecheck     # Type check without emitting
+npm install          # Install dependencies
+npm run build        # Compile TypeScript
+npm test             # Run unit tests
+npm run test:watch   # Tests in watch mode
+npm run typecheck    # Type check only
 ```
 
 ### Manual Testing
 
 ```bash
-# Generate a real image and save to test-output.png
 GEMINI_API_KEY=your_key npm run test:manual "a cute cat wearing sunglasses"
 ```
 
-### Testing with MCP Inspector
+### MCP Inspector
 
 ```bash
 npx @modelcontextprotocol/inspector node dist/index.js
 ```
-
-Then set `GEMINI_API_KEY` in the inspector's environment and call the `generate_image` tool.
 
 ---
 
