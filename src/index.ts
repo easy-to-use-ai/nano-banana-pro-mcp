@@ -5,11 +5,14 @@ import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js"
 import {
   CallToolRequestSchema,
   ListToolsRequestSchema,
+  ListPromptsRequestSchema,
+  GetPromptRequestSchema,
 } from "@modelcontextprotocol/sdk/types.js";
 import { z } from "zod";
 import { writeFile, mkdir } from "fs/promises";
 import { dirname, resolve } from "path";
 import { GeminiImageClient } from "./gemini.js";
+import { IMAGE_PROMPTS } from "./prompts.js";
 
 async function saveImageToFile(
   base64Data: string,
@@ -18,15 +21,26 @@ async function saveImageToFile(
   const absolutePath = resolve(outputPath);
   const dir = dirname(absolutePath);
 
-  // Ensure directory exists
   await mkdir(dir, { recursive: true });
 
-  // Decode base64 and write to file
   const buffer = Buffer.from(base64Data, "base64");
   await writeFile(absolutePath, buffer);
 
   return absolutePath;
 }
+
+const ASPECT_RATIOS = [
+  "1:1",
+  "3:2", "2:3",
+  "3:4", "4:3",
+  "4:5", "5:4",
+  "9:16", "16:9",
+  "21:9",
+  "4:1", "1:4",
+  "8:1", "1:8",
+] as const;
+
+const IMAGE_SIZES = ["512px", "1K", "2K", "4K"] as const;
 
 const imageInputSchema = z.object({
   data: z.string().describe("Base64 encoded image data"),
@@ -36,12 +50,12 @@ const imageInputSchema = z.object({
 const generateImageSchema = z.object({
   prompt: z.string().describe("Description of the image to generate"),
   aspectRatio: z
-    .enum(["1:1", "3:4", "4:3", "9:16", "16:9"])
+    .enum(ASPECT_RATIOS)
     .optional()
     .default("1:1")
     .describe("Aspect ratio of the generated image"),
   imageSize: z
-    .enum(["1K", "2K", "4K"])
+    .enum(IMAGE_SIZES)
     .optional()
     .default("1K")
     .describe("Resolution of the generated image"),
@@ -57,6 +71,28 @@ const generateImageSchema = z.object({
     .string()
     .optional()
     .describe("Optional file path to save the generated image (e.g., /path/to/image.png)"),
+  personGeneration: z
+    .enum(["ALLOW_ALL", "ALLOW_ADULT", "ALLOW_NONE"])
+    .optional()
+    .describe("Controls the generation of people in images"),
+  useGoogleSearch: z
+    .boolean()
+    .optional()
+    .default(false)
+    .describe("Enable Google Search grounding to use real-time web data for more accurate image generation"),
+  thinkingConfig: z
+    .object({
+      thinkingLevel: z
+        .enum(["MINIMAL", "LOW", "MEDIUM", "HIGH"])
+        .optional()
+        .describe("Thinking reasoning depth"),
+      includeThoughts: z
+        .boolean()
+        .optional()
+        .describe("Whether to return the reasoning process"),
+    })
+    .optional()
+    .describe("Controls the model's thinking/reasoning behavior"),
 });
 
 const editImageSchema = z.object({
@@ -73,6 +109,10 @@ const editImageSchema = z.object({
     .string()
     .optional()
     .describe("Optional file path to save the edited image (e.g., /path/to/image.png)"),
+  personGeneration: z
+    .enum(["ALLOW_ALL", "ALLOW_ADULT", "ALLOW_NONE"])
+    .optional()
+    .describe("Controls the generation of people in images"),
 });
 
 const describeImageSchema = z.object({
@@ -96,11 +136,12 @@ export function createServer(apiKey: string): Server {
   const server = new Server(
     {
       name: "nano-banana-pro-mcp",
-      version: "2.0.0",
+      version: "3.0.0",
     },
     {
       capabilities: {
         tools: {},
+        prompts: {},
       },
     }
   );
@@ -121,14 +162,14 @@ export function createServer(apiKey: string): Server {
               },
               aspectRatio: {
                 type: "string",
-                enum: ["1:1", "3:4", "4:3", "9:16", "16:9"],
-                description: "Aspect ratio of the generated image",
+                enum: [...ASPECT_RATIOS],
+                description: "Aspect ratio of the generated image. Nano Banana 2 exclusive ultra-wide/tall: 4:1, 1:4, 8:1, 1:8",
                 default: "1:1",
               },
               imageSize: {
                 type: "string",
-                enum: ["1K", "2K", "4K"],
-                description: "Resolution of the generated image",
+                enum: [...IMAGE_SIZES],
+                description: "Resolution of the generated image (512px for fast iterations, 1K default, 2K/4K for high quality)",
                 default: "1K",
               },
               model: {
@@ -139,7 +180,7 @@ export function createServer(apiKey: string): Server {
               },
               images: {
                 type: "array",
-                description: "Optional reference images to guide generation",
+                description: "Optional reference images to guide generation (up to 10 object refs + 4 person refs = 14 total)",
                 items: {
                   type: "object",
                   properties: {
@@ -152,6 +193,31 @@ export function createServer(apiKey: string): Server {
               outputPath: {
                 type: "string",
                 description: "Optional file path to save the generated image (e.g., /path/to/image.png)",
+              },
+              personGeneration: {
+                type: "string",
+                enum: ["ALLOW_ALL", "ALLOW_ADULT", "ALLOW_NONE"],
+                description: "Controls the generation of people in images",
+              },
+              useGoogleSearch: {
+                type: "boolean",
+                description: "Enable Google Search grounding to use real-time web data for more accurate image generation (e.g., current weather, real products, recent events)",
+                default: false,
+              },
+              thinkingConfig: {
+                type: "object",
+                description: "Controls the model's thinking/reasoning behavior for complex compositions",
+                properties: {
+                  thinkingLevel: {
+                    type: "string",
+                    enum: ["MINIMAL", "LOW", "MEDIUM", "HIGH"],
+                    description: "Thinking depth: MINIMAL (fast, default) or HIGH (better for complex scenes, precise text)",
+                  },
+                  includeThoughts: {
+                    type: "boolean",
+                    description: "Whether to return the reasoning process",
+                  },
+                },
               },
             },
             required: ["prompt"],
@@ -190,6 +256,11 @@ export function createServer(apiKey: string): Server {
               outputPath: {
                 type: "string",
                 description: "Optional file path to save the edited image (e.g., /path/to/image.png)",
+              },
+              personGeneration: {
+                type: "string",
+                enum: ["ALLOW_ALL", "ALLOW_ADULT", "ALLOW_NONE"],
+                description: "Controls the generation of people in images",
               },
             },
             required: ["prompt", "images"],
@@ -239,7 +310,6 @@ export function createServer(apiKey: string): Server {
         const args = generateImageSchema.parse(request.params.arguments);
         const result = await client.generateImage(args);
 
-        // Save to file if outputPath is provided
         let savedPath: string | undefined;
         if (args.outputPath) {
           savedPath = await saveImageToFile(result.base64Data, args.outputPath);
@@ -257,6 +327,12 @@ export function createServer(apiKey: string): Server {
               : []),
             ...(result.description
               ? [{ type: "text" as const, text: result.description }]
+              : []),
+            ...(result.thoughts
+              ? [{ type: "text" as const, text: `[Thinking] ${result.thoughts}` }]
+              : []),
+            ...(result.searchQueries && result.searchQueries.length > 0
+              ? [{ type: "text" as const, text: `[Search queries] ${result.searchQueries.join(", ")}` }]
               : []),
           ],
         };
@@ -282,9 +358,9 @@ export function createServer(apiKey: string): Server {
           prompt: args.prompt,
           images: args.images,
           model: args.model,
+          personGeneration: args.personGeneration,
         });
 
-        // Save to file if outputPath is provided
         let savedPath: string | undefined;
         if (args.outputPath) {
           savedPath = await saveImageToFile(result.base64Data, args.outputPath);
@@ -363,6 +439,39 @@ export function createServer(apiKey: string): Server {
     };
   });
 
+  server.setRequestHandler(ListPromptsRequestSchema, async () => {
+    return {
+      prompts: IMAGE_PROMPTS.map((p) => ({
+        name: p.name,
+        title: p.title,
+        description: p.description,
+        arguments: p.arguments.map((a) => ({
+          name: a.name,
+          description: a.description,
+          required: a.required,
+        })),
+      })),
+    };
+  });
+
+  server.setRequestHandler(GetPromptRequestSchema, async (request) => {
+    const promptDef = IMAGE_PROMPTS.find(
+      (p) => p.name === request.params.name
+    );
+
+    if (!promptDef) {
+      throw new Error(`Unknown prompt: ${request.params.name}`);
+    }
+
+    const args = request.params.arguments ?? {};
+    const messages = promptDef.buildMessages(args);
+
+    return {
+      description: promptDef.description,
+      messages,
+    };
+  });
+
   return server;
 }
 
@@ -382,7 +491,6 @@ async function main() {
   console.error("Nano Banana Pro MCP server started");
 }
 
-// Only run main when executed directly (not when imported for testing)
 const isMainModule =
   import.meta.url === `file://${process.argv[1]}` ||
   process.argv[1]?.endsWith("nano-banana-pro-mcp");

@@ -94,7 +94,7 @@ describe("GeminiImageClient", () => {
         prompt: "a cat",
         aspectRatio: "16:9",
         imageSize: "4K",
-        model: "gemini-3-pro-image-preview", // Use image model to test imageConfig
+        model: "gemini-3-pro-image-preview",
       });
 
       const callArgs = vi.mocked(fetch).mock.calls[0];
@@ -104,6 +104,200 @@ describe("GeminiImageClient", () => {
         aspectRatio: "16:9",
         imageSize: "4K",
       });
+    });
+
+    it("should support new ultra-wide aspect ratios", async () => {
+      const mockResponse = {
+        candidates: [
+          {
+            content: {
+              parts: [
+                { inlineData: { mimeType: "image/png", data: "base64data" } },
+              ],
+            },
+          },
+        ],
+      };
+
+      vi.mocked(fetch).mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve(mockResponse),
+      } as Response);
+
+      const client = new GeminiImageClient(mockApiKey);
+      await client.generateImage({
+        prompt: "a panoramic cityscape",
+        aspectRatio: "8:1",
+        imageSize: "2K",
+      });
+
+      const callArgs = vi.mocked(fetch).mock.calls[0];
+      const body = JSON.parse(callArgs[1]?.body as string);
+
+      expect(body.generationConfig.imageConfig.aspectRatio).toBe("8:1");
+      expect(body.generationConfig.imageConfig.imageSize).toBe("2K");
+    });
+
+    it("should support 512px image size", async () => {
+      const mockResponse = {
+        candidates: [
+          {
+            content: {
+              parts: [
+                { inlineData: { mimeType: "image/png", data: "base64data" } },
+              ],
+            },
+          },
+        ],
+      };
+
+      vi.mocked(fetch).mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve(mockResponse),
+      } as Response);
+
+      const client = new GeminiImageClient(mockApiKey);
+      await client.generateImage({
+        prompt: "quick sketch",
+        imageSize: "512px",
+      });
+
+      const callArgs = vi.mocked(fetch).mock.calls[0];
+      const body = JSON.parse(callArgs[1]?.body as string);
+
+      expect(body.generationConfig.imageConfig.imageSize).toBe("512px");
+    });
+
+    it("should enable google_search when useGoogleSearch is true", async () => {
+      const mockResponse = {
+        candidates: [
+          {
+            content: {
+              parts: [
+                { text: "Weather infographic" },
+                { inlineData: { mimeType: "image/png", data: "base64data" } },
+              ],
+            },
+            groundingMetadata: {
+              webSearchQueries: ["Tokyo weather today"],
+            },
+          },
+        ],
+      };
+
+      vi.mocked(fetch).mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve(mockResponse),
+      } as Response);
+
+      const client = new GeminiImageClient(mockApiKey);
+      const result = await client.generateImage({
+        prompt: "Generate a weather infographic for Tokyo today",
+        useGoogleSearch: true,
+      });
+
+      const callArgs = vi.mocked(fetch).mock.calls[0];
+      const body = JSON.parse(callArgs[1]?.body as string);
+
+      expect(body.tools).toEqual([{ google_search: {} }]);
+      expect(result.searchQueries).toEqual(["Tokyo weather today"]);
+    });
+
+    it("should not include tools when useGoogleSearch is false or undefined", async () => {
+      const mockResponse = {
+        candidates: [
+          {
+            content: {
+              parts: [
+                { inlineData: { mimeType: "image/png", data: "base64data" } },
+              ],
+            },
+          },
+        ],
+      };
+
+      vi.mocked(fetch).mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve(mockResponse),
+      } as Response);
+
+      const client = new GeminiImageClient(mockApiKey);
+      await client.generateImage({ prompt: "a cat" });
+
+      const callArgs = vi.mocked(fetch).mock.calls[0];
+      const body = JSON.parse(callArgs[1]?.body as string);
+
+      expect(body.tools).toBeUndefined();
+    });
+
+    it("should pass personGeneration to imageConfig", async () => {
+      const mockResponse = {
+        candidates: [
+          {
+            content: {
+              parts: [
+                { inlineData: { mimeType: "image/png", data: "base64data" } },
+              ],
+            },
+          },
+        ],
+      };
+
+      vi.mocked(fetch).mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve(mockResponse),
+      } as Response);
+
+      const client = new GeminiImageClient(mockApiKey);
+      await client.generateImage({
+        prompt: "a crowd scene",
+        personGeneration: "ALLOW_ALL",
+      });
+
+      const callArgs = vi.mocked(fetch).mock.calls[0];
+      const body = JSON.parse(callArgs[1]?.body as string);
+
+      expect(body.generationConfig.imageConfig.personGeneration).toBe("ALLOW_ALL");
+    });
+
+    it("should pass thinkingConfig to generationConfig", async () => {
+      const mockResponse = {
+        candidates: [
+          {
+            content: {
+              parts: [
+                { text: "Thought process...", thought: true },
+                { text: "Generated image description" },
+                { inlineData: { mimeType: "image/png", data: "base64data" } },
+              ],
+            },
+          },
+        ],
+      };
+
+      vi.mocked(fetch).mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve(mockResponse),
+      } as Response);
+
+      const client = new GeminiImageClient(mockApiKey);
+      const result = await client.generateImage({
+        prompt: "a complex scene",
+        thinkingConfig: {
+          thinkingLevel: "HIGH",
+          includeThoughts: true,
+        },
+      });
+
+      const callArgs = vi.mocked(fetch).mock.calls[0];
+      const body = JSON.parse(callArgs[1]?.body as string);
+
+      expect(body.generationConfig.thinkingConfig).toEqual({
+        thinkingLevel: "HIGH",
+        includeThoughts: true,
+      });
+      expect(result.thoughts).toBe("Thought process...");
+      expect(result.description).toBe("Generated image description");
     });
 
     it("should not include imageConfig for non-image models", async () => {
@@ -132,7 +326,7 @@ describe("GeminiImageClient", () => {
       const client = new GeminiImageClient(mockApiKey);
       await client.generateImage({
         prompt: "a cat",
-        aspectRatio: "16:9", // These should be ignored
+        aspectRatio: "16:9",
         imageSize: "4K",
         model: "gemini-2.0-flash-exp",
       });

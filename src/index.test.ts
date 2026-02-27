@@ -3,7 +3,6 @@ import { createServer } from "./index.js";
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { InMemoryTransport } from "@modelcontextprotocol/sdk/inMemory.js";
 
-// Mock fs/promises
 vi.mock("fs/promises", () => ({
   writeFile: vi.fn().mockResolvedValue(undefined),
   mkdir: vi.fn().mockResolvedValue(undefined),
@@ -11,7 +10,6 @@ vi.mock("fs/promises", () => ({
 
 import { writeFile, mkdir } from "fs/promises";
 
-// Valid base64 string for testing (1x1 transparent PNG)
 const VALID_BASE64_PNG =
   "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==";
 
@@ -70,6 +68,40 @@ describe("MCP Server", () => {
       expect(properties.aspectRatio).toBeDefined();
       expect(properties.imageSize).toBeDefined();
       expect(properties.images).toBeDefined();
+      expect(properties.personGeneration).toBeDefined();
+      expect(properties.useGoogleSearch).toBeDefined();
+      expect(properties.thinkingConfig).toBeDefined();
+    });
+
+    it("should expose all 14 aspect ratios in generate_image schema", async () => {
+      const { client } = await createTestClient();
+      const result = await client.listTools();
+
+      const tool = result.tools[0];
+      const aspectRatio = (tool.inputSchema.properties as Record<string, { enum?: string[] }>).aspectRatio;
+
+      expect(aspectRatio.enum).toContain("1:1");
+      expect(aspectRatio.enum).toContain("16:9");
+      expect(aspectRatio.enum).toContain("21:9");
+      expect(aspectRatio.enum).toContain("4:1");
+      expect(aspectRatio.enum).toContain("1:4");
+      expect(aspectRatio.enum).toContain("8:1");
+      expect(aspectRatio.enum).toContain("1:8");
+      expect(aspectRatio.enum).toHaveLength(14);
+    });
+
+    it("should expose 512px in imageSize enum", async () => {
+      const { client } = await createTestClient();
+      const result = await client.listTools();
+
+      const tool = result.tools[0];
+      const imageSize = (tool.inputSchema.properties as Record<string, { enum?: string[] }>).imageSize;
+
+      expect(imageSize.enum).toContain("512px");
+      expect(imageSize.enum).toContain("1K");
+      expect(imageSize.enum).toContain("2K");
+      expect(imageSize.enum).toContain("4K");
+      expect(imageSize.enum).toHaveLength(4);
     });
 
     it("should have correct input schema for edit_image", async () => {
@@ -82,6 +114,7 @@ describe("MCP Server", () => {
       expect(properties.prompt).toBeDefined();
       expect(properties.images).toBeDefined();
       expect(properties.model).toBeDefined();
+      expect(properties.personGeneration).toBeDefined();
     });
   });
 
@@ -197,7 +230,7 @@ describe("MCP Server", () => {
           prompt: "panorama",
           aspectRatio: "16:9",
           imageSize: "4K",
-          model: "gemini-3-pro-image-preview", // Use image model
+          model: "gemini-3-pro-image-preview",
         },
       });
 
@@ -208,6 +241,126 @@ describe("MCP Server", () => {
         aspectRatio: "16:9",
         imageSize: "4K",
       });
+    });
+
+    it("should support ultra-wide 8:1 aspect ratio", async () => {
+      const mockResponse = {
+        candidates: [
+          {
+            content: {
+              parts: [
+                { inlineData: { mimeType: "image/png", data: VALID_BASE64_PNG } },
+              ],
+            },
+          },
+        ],
+      };
+
+      vi.mocked(fetch).mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve(mockResponse),
+      } as Response);
+
+      const { client } = await createTestClient();
+      await client.callTool({
+        name: "generate_image",
+        arguments: {
+          prompt: "a panoramic banner",
+          aspectRatio: "8:1",
+          imageSize: "2K",
+        },
+      });
+
+      const callArgs = vi.mocked(fetch).mock.calls[0];
+      const body = JSON.parse(callArgs[1]?.body as string);
+
+      expect(body.generationConfig.imageConfig.aspectRatio).toBe("8:1");
+    });
+
+    it("should enable google search when useGoogleSearch is true", async () => {
+      const mockResponse = {
+        candidates: [
+          {
+            content: {
+              parts: [
+                { text: "Weather info" },
+                { inlineData: { mimeType: "image/png", data: VALID_BASE64_PNG } },
+              ],
+            },
+            groundingMetadata: {
+              webSearchQueries: ["Shanghai weather today"],
+            },
+          },
+        ],
+      };
+
+      vi.mocked(fetch).mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve(mockResponse),
+      } as Response);
+
+      const { client } = await createTestClient();
+      const result = await client.callTool({
+        name: "generate_image",
+        arguments: {
+          prompt: "Today's weather infographic for Shanghai",
+          useGoogleSearch: true,
+        },
+      });
+
+      expect(result.isError).toBeFalsy();
+
+      const callArgs = vi.mocked(fetch).mock.calls[0];
+      const body = JSON.parse(callArgs[1]?.body as string);
+      expect(body.tools).toEqual([{ google_search: {} }]);
+
+      const textContents = (result.content as Array<{ type: string; text?: string }>)
+        .filter(c => c.type === "text")
+        .map(c => c.text);
+      expect(textContents.some(t => t?.includes("Search queries"))).toBe(true);
+    });
+
+    it("should pass thinkingConfig through MCP tool", async () => {
+      const mockResponse = {
+        candidates: [
+          {
+            content: {
+              parts: [
+                { text: "My reasoning...", thought: true },
+                { inlineData: { mimeType: "image/png", data: VALID_BASE64_PNG } },
+              ],
+            },
+          },
+        ],
+      };
+
+      vi.mocked(fetch).mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve(mockResponse),
+      } as Response);
+
+      const { client } = await createTestClient();
+      const result = await client.callTool({
+        name: "generate_image",
+        arguments: {
+          prompt: "complex scene with many elements",
+          thinkingConfig: { thinkingLevel: "HIGH", includeThoughts: true },
+        },
+      });
+
+      expect(result.isError).toBeFalsy();
+
+      const callArgs = vi.mocked(fetch).mock.calls[0];
+      const body = JSON.parse(callArgs[1]?.body as string);
+      expect(body.generationConfig.thinkingConfig).toEqual({
+        thinkingLevel: "HIGH",
+        includeThoughts: true,
+      });
+
+      const textContents = (result.content as Array<{ type: string; text?: string }>)
+        .filter(c => c.type === "text")
+        .map(c => c.text);
+      expect(textContents.some(t => t?.includes("[Thinking]"))).toBe(true);
     });
 
     it("should return error on API failure", async () => {
@@ -234,7 +387,7 @@ describe("MCP Server", () => {
       const { client } = await createTestClient();
       const result = await client.callTool({
         name: "generate_image",
-        arguments: { prompt: 123 }, // Invalid type
+        arguments: { prompt: 123 },
       });
 
       expect(result.isError).toBe(true);
@@ -282,7 +435,6 @@ describe("MCP Server", () => {
         "/tmp/test-output/image.png",
         expect.any(Buffer)
       );
-      // Should include both image and save confirmation
       expect(result.content).toHaveLength(2);
       expect(result.content[0]).toEqual({
         type: "image",
@@ -371,7 +523,6 @@ describe("MCP Server", () => {
         mimeType: "image/png",
       });
 
-      // Verify images were sent in request
       const callArgs = vi.mocked(fetch).mock.calls[0];
       const body = JSON.parse(callArgs[1]?.body as string);
       expect(body.contents[0].parts).toHaveLength(2);
@@ -461,10 +612,9 @@ describe("MCP Server", () => {
 
       expect(result.isError).toBeFalsy();
 
-      // Verify multiple images were sent
       const callArgs = vi.mocked(fetch).mock.calls[0];
       const body = JSON.parse(callArgs[1]?.body as string);
-      expect(body.contents[0].parts).toHaveLength(3); // prompt + 2 images
+      expect(body.contents[0].parts).toHaveLength(3);
     });
 
     it("should return error when no images provided to edit_image", async () => {
@@ -473,7 +623,7 @@ describe("MCP Server", () => {
         name: "edit_image",
         arguments: {
           prompt: "Edit this",
-          images: [], // Empty array
+          images: [],
         },
       });
 
@@ -552,6 +702,39 @@ describe("MCP Server", () => {
         text: "Image saved to: /tmp/edited-image.png",
       });
     });
+
+    it("should pass personGeneration to edit_image", async () => {
+      const mockResponse = {
+        candidates: [
+          {
+            content: {
+              parts: [
+                { inlineData: { mimeType: "image/png", data: VALID_BASE64_PNG } },
+              ],
+            },
+          },
+        ],
+      };
+
+      vi.mocked(fetch).mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve(mockResponse),
+      } as Response);
+
+      const { client } = await createTestClient();
+      await client.callTool({
+        name: "edit_image",
+        arguments: {
+          prompt: "Add people to this scene",
+          images: [{ data: VALID_BASE64_PNG, mimeType: "image/png" }],
+          personGeneration: "ALLOW_ALL",
+        },
+      });
+
+      const callArgs = vi.mocked(fetch).mock.calls[0];
+      const body = JSON.parse(callArgs[1]?.body as string);
+      expect(body.generationConfig.imageConfig.personGeneration).toBe("ALLOW_ALL");
+    });
   });
 
   describe("callTool - describe_image", () => {
@@ -618,7 +801,6 @@ describe("MCP Server", () => {
         text: "There are 3 objects",
       });
 
-      // Verify custom prompt was sent
       const callArgs = vi.mocked(fetch).mock.calls[0];
       const body = JSON.parse(callArgs[1]?.body as string);
       expect(body.contents[0].parts[0].text).toBe("How many objects are in this image?");
@@ -676,6 +858,143 @@ describe("MCP Server", () => {
         type: "text",
         text: "Unknown tool: unknown_tool",
       });
+    });
+  });
+
+  describe("prompts", () => {
+    it("should list all 10 prompt templates", async () => {
+      const { client } = await createTestClient();
+      const result = await client.listPrompts();
+
+      expect(result.prompts).toHaveLength(10);
+      const names = result.prompts.map((p: { name: string }) => p.name);
+      expect(names).toContain("ultra_wide_panorama");
+      expect(names).toContain("weather_infographic");
+      expect(names).toContain("ecommerce_banner");
+      expect(names).toContain("product_detail_long");
+      expect(names).toContain("scroll_painting_panorama");
+      expect(names).toContain("resize_and_enhance");
+      expect(names).toContain("character_multi_scene");
+      expect(names).toContain("knowledge_card");
+      expect(names).toContain("comic_storyboard");
+      expect(names).toContain("brand_logo_system");
+    });
+
+    it("should have description and arguments for each prompt", async () => {
+      const { client } = await createTestClient();
+      const result = await client.listPrompts();
+
+      for (const prompt of result.prompts) {
+        expect(prompt.description).toBeTruthy();
+        expect(prompt.arguments).toBeDefined();
+        expect(prompt.arguments!.length).toBeGreaterThan(0);
+
+        const hasRequired = prompt.arguments!.some(
+          (a: { required?: boolean }) => a.required
+        );
+        expect(hasRequired).toBe(true);
+      }
+    });
+
+    it("should get ultra_wide_panorama prompt with args", async () => {
+      const { client } = await createTestClient();
+      const result = await client.getPrompt({
+        name: "ultra_wide_panorama",
+        arguments: { city: "Tokyo", style: "cyberpunk", time_of_day: "night" },
+      });
+
+      expect(result.messages).toHaveLength(1);
+      expect(result.messages[0].role).toBe("user");
+      const text = (result.messages[0].content as { type: string; text: string }).text;
+      expect(text).toContain("Tokyo");
+      expect(text).toContain("cyberpunk");
+      expect(text).toContain("night");
+      expect(text).toContain("8:1");
+    });
+
+    it("should get weather_infographic prompt with google search", async () => {
+      const { client } = await createTestClient();
+      const result = await client.getPrompt({
+        name: "weather_infographic",
+        arguments: { city: "Shanghai", language: "English" },
+      });
+
+      const text = (result.messages[0].content as { type: string; text: string }).text;
+      expect(text).toContain("Shanghai");
+      expect(text).toContain("English");
+      expect(text).toContain("useGoogleSearch: true");
+    });
+
+    it("should get scroll_painting_panorama with variant", async () => {
+      const { client } = await createTestClient();
+      const result = await client.getPrompt({
+        name: "scroll_painting_panorama",
+        arguments: { city: "Chengdu", variant: "ghibli" },
+      });
+
+      const text = (result.messages[0].content as { type: string; text: string }).text;
+      expect(text).toContain("Chengdu");
+      expect(text).toContain("Ghibli");
+      expect(text).toContain("8:1");
+    });
+
+    it("should get product_detail_long prompt with 1:4 ratio", async () => {
+      const { client } = await createTestClient();
+      const result = await client.getPrompt({
+        name: "product_detail_long",
+        arguments: { product: "wireless earbuds" },
+      });
+
+      const text = (result.messages[0].content as { type: string; text: string }).text;
+      expect(text).toContain("wireless earbuds");
+      expect(text).toContain("1:4");
+      expect(text).toContain("thinkingLevel");
+    });
+
+    it("should get brand_logo_system prompt with thinking mode", async () => {
+      const { client } = await createTestClient();
+      const result = await client.getPrompt({
+        name: "brand_logo_system",
+        arguments: { brand_name: "NovaTech", industry: "AI startup" },
+      });
+
+      const text = (result.messages[0].content as { type: string; text: string }).text;
+      expect(text).toContain("NovaTech");
+      expect(text).toContain("AI startup");
+      expect(text).toContain("4K");
+      expect(text).toContain("thinkingLevel");
+    });
+
+    it("should get knowledge_card prompt with search + thinking", async () => {
+      const { client } = await createTestClient();
+      const result = await client.getPrompt({
+        name: "knowledge_card",
+        arguments: { subject: "Giant Panda", card_type: "species" },
+      });
+
+      const text = (result.messages[0].content as { type: string; text: string }).text;
+      expect(text).toContain("Giant Panda");
+      expect(text).toContain("useGoogleSearch: true");
+      expect(text).toContain("thinkingLevel");
+    });
+
+    it("should use default values when optional args are missing", async () => {
+      const { client } = await createTestClient();
+      const result = await client.getPrompt({
+        name: "ultra_wide_panorama",
+        arguments: { city: "Paris" },
+      });
+
+      const text = (result.messages[0].content as { type: string; text: string }).text;
+      expect(text).toContain("Paris");
+      expect(text).toContain("2K");
+    });
+
+    it("should throw for unknown prompt name", async () => {
+      const { client } = await createTestClient();
+      await expect(
+        client.getPrompt({ name: "nonexistent_prompt" })
+      ).rejects.toThrow();
     });
   });
 });

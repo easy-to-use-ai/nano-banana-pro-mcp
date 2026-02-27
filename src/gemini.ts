@@ -8,7 +8,6 @@ import type {
 
 const GEMINI_API_BASE = "https://generativelanguage.googleapis.com/v1beta/models";
 
-// Allowed models for image generation
 const ALLOWED_MODELS = [
   "gemini-3.1-flash-image-preview",  // Nano Banana 2 (latest, recommended)
   "gemini-3-pro-image-preview",      // Nano Banana Pro (highest quality)
@@ -29,25 +28,21 @@ export class GeminiImageClient {
   }
 
   async generateImage(options: GenerateImageOptions): Promise<GeneratedImage> {
-    const { prompt, aspectRatio, imageSize, images } = options;
+    const { prompt, aspectRatio, imageSize, images, personGeneration, useGoogleSearch, thinkingConfig } = options;
     const model = options.model || DEFAULT_MODEL;
 
-    // Validate model against allowlist to prevent URL manipulation
     if (!ALLOWED_MODELS.includes(model as typeof ALLOWED_MODELS[number])) {
       throw new Error(
         `Invalid model: ${model}. Allowed: ${ALLOWED_MODELS.join(", ")}`
       );
     }
 
-    // Only certain models support imageConfig (aspect ratio, size)
     const supportsImageConfig = model.includes("image") || model.includes("imagen");
 
-    // Build request parts array: text prompt + optional input images
     const requestParts: Array<{ text: string } | { inlineData: { mimeType: string; data: string } }> = [
       { text: prompt }
     ];
 
-    // Add input images if provided (for reference or editing)
     if (images && images.length > 0) {
       for (const img of images) {
         requestParts.push({
@@ -67,16 +62,23 @@ export class GeminiImageClient {
       ],
       generationConfig: {
         responseModalities: ["TEXT", "IMAGE"],
-        ...(supportsImageConfig && (aspectRatio || imageSize)
+        ...(supportsImageConfig && (aspectRatio || imageSize || personGeneration)
           ? {
               imageConfig: {
                 ...(aspectRatio && { aspectRatio }),
                 ...(imageSize && { imageSize }),
+                ...(personGeneration && { personGeneration }),
               },
             }
           : {}),
+        ...(thinkingConfig ? { thinkingConfig } : {}),
       },
     };
+
+    if (useGoogleSearch) {
+      requestBody.tools = [{ google_search: {} }];
+    }
+
     const url = `${GEMINI_API_BASE}/${model}:generateContent?key=${this.apiKey}`;
 
     const response = await fetch(url, {
@@ -102,9 +104,11 @@ export class GeminiImageClient {
       throw new Error("No image generated - empty response from Gemini");
     }
 
-    const responseParts = data.candidates[0].content.parts;
+    const candidate = data.candidates[0];
+    const responseParts = candidate.content.parts;
     let imageData: GeneratedImage | null = null;
     let description: string | undefined;
+    let thoughts: string | undefined;
 
     for (const part of responseParts) {
       if ("inlineData" in part && part.inlineData) {
@@ -113,7 +117,11 @@ export class GeminiImageClient {
           base64Data: part.inlineData.data,
         };
       } else if ("text" in part && part.text) {
-        description = part.text;
+        if (part.thought) {
+          thoughts = (thoughts ? thoughts + "\n" : "") + part.text;
+        } else {
+          description = part.text;
+        }
       }
     }
 
@@ -121,9 +129,13 @@ export class GeminiImageClient {
       throw new Error("No image data in Gemini response");
     }
 
+    const searchQueries = candidate.groundingMetadata?.webSearchQueries;
+
     return {
       ...imageData,
       description,
+      ...(thoughts ? { thoughts } : {}),
+      ...(searchQueries && searchQueries.length > 0 ? { searchQueries } : {}),
     };
   }
 
@@ -131,7 +143,6 @@ export class GeminiImageClient {
     const { images, prompt } = options;
     const model = options.model || DEFAULT_MODEL;
 
-    // Validate model against allowlist to prevent URL manipulation
     if (!ALLOWED_MODELS.includes(model as typeof ALLOWED_MODELS[number])) {
       throw new Error(
         `Invalid model: ${model}. Allowed: ${ALLOWED_MODELS.join(", ")}`
@@ -142,7 +153,6 @@ export class GeminiImageClient {
       throw new Error("At least one image is required");
     }
 
-    // Build request parts: prompt + images
     const defaultPrompt = "Describe this image in detail. What do you see?";
     const requestParts: Array<{ text: string } | { inlineData: { mimeType: string; data: string } }> = [
       { text: prompt || defaultPrompt }
@@ -164,7 +174,7 @@ export class GeminiImageClient {
         },
       ],
       generationConfig: {
-        responseModalities: ["TEXT"],  // Text only, no image output
+        responseModalities: ["TEXT"],
       },
     };
 
