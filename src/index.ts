@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 
+import { createRequire } from "node:module";
 import { Server } from "@modelcontextprotocol/sdk/server/index.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import {
@@ -8,6 +9,9 @@ import {
   ListPromptsRequestSchema,
   GetPromptRequestSchema,
 } from "@modelcontextprotocol/sdk/types.js";
+
+const require = createRequire(import.meta.url);
+const { version } = require("../package.json") as { version: string };
 import { z } from "zod";
 import { writeFile, mkdir } from "fs/promises";
 import { dirname, resolve } from "path";
@@ -136,7 +140,7 @@ export function createServer(apiKey: string): Server {
   const server = new Server(
     {
       name: "nano-banana-pro-mcp",
-      version: "3.0.0",
+      version,
     },
     {
       capabilities: {
