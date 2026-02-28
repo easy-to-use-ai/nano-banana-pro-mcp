@@ -864,7 +864,7 @@ describe("MCP Server", () => {
       const { client } = await createTestClient();
       const result = await client.listPrompts();
 
-      expect(result.prompts).toHaveLength(10);
+      expect(result.prompts).toHaveLength(17);
       const names = result.prompts.map((p: { name: string }) => p.name);
       expect(names).toContain("ultra_wide_panorama");
       expect(names).toContain("weather_infographic");
@@ -876,6 +876,13 @@ describe("MCP Server", () => {
       expect(names).toContain("knowledge_card");
       expect(names).toContain("comic_storyboard");
       expect(names).toContain("brand_logo_system");
+      expect(names).toContain("whiteboard_infographic");
+      expect(names).toContain("minimalist_cover");
+      expect(names).toContain("vertical_comic_strip");
+      expect(names).toContain("ecommerce_product_suite");
+      expect(names).toContain("blindbox_miniature_store");
+      expect(names).toContain("timeline_illustration");
+      expect(names).toContain("city_food_culture_card");
     });
 
     it("should have description and arguments for each prompt", async () => {

@@ -210,7 +210,7 @@ Analyze and describe images. Returns text only.
 
 ## Prompt Templates
 
-The server includes **10 built-in prompt templates** showcasing best practices and creative workflows with Nano Banana 2's new features. AI agents can discover and use these via the MCP prompts protocol.
+The server includes **17 built-in prompt templates** showcasing best practices and creative workflows with Nano Banana 2's new features. AI agents can discover and use these via the MCP prompts protocol.
 
 With Claude Desktop or any MCP-compatible client, you can select a prompt template and fill in the parameters:
 
@@ -280,6 +280,48 @@ Use the "scroll_painting_panorama" prompt:
 > 4K + Thinking · Logo design, brand identity sheets
 
 <img src="https://raw.githubusercontent.com/easy-to-use-ai/nano-banana-pro-mcp/main/assets/prompt-10-brand-logo.png" alt="Brand Logo System" width="100%">
+
+### 11. `whiteboard_infographic` — Whiteboard Stickman Infographic
+
+> Marker-drawn diagrams · Article illustrations, tutorials, explainers
+
+<img src="https://raw.githubusercontent.com/easy-to-use-ai/nano-banana-pro-mcp/main/assets/prompt-11-whiteboard-infographic.png" alt="Whiteboard Infographic" width="100%">
+
+### 12. `minimalist_cover` — Minimalist Negative Space Cover
+
+> 2-3 colors only · Notebook covers, book jackets, brand stationery
+
+<img src="https://raw.githubusercontent.com/easy-to-use-ai/nano-banana-pro-mcp/main/assets/prompt-12-minimalist-cover.png" alt="Minimalist Cover" width="320">
+
+### 13. `vertical_comic_strip` — Vertical Comic Strip (9:16)
+
+> 9:16 ratio + Thinking · Webtoon, social media stories, mobile comics
+
+<img src="https://raw.githubusercontent.com/easy-to-use-ai/nano-banana-pro-mcp/main/assets/prompt-13-vertical-comic.png" alt="Vertical Comic Strip" width="360">
+
+### 14. `ecommerce_product_suite` — E-Commerce Product Image Suite
+
+> Multi-shot workflow · Hero, lifestyle, and feature callout images
+
+<img src="https://raw.githubusercontent.com/easy-to-use-ai/nano-banana-pro-mcp/main/assets/prompt-14-ecommerce-suite.png" alt="E-Commerce Product Suite" width="100%">
+
+### 15. `blindbox_miniature_store` — Brand Blind Box Miniature Store
+
+> 3D Q-version + Thinking · Brand social media, merchandise concepts
+
+<img src="https://raw.githubusercontent.com/easy-to-use-ai/nano-banana-pro-mcp/main/assets/prompt-15-blindbox-store.png" alt="Blind Box Miniature Store" width="400">
+
+### 16. `timeline_illustration` — Ultra-Long Timeline Illustration
+
+> 8:1 or 1:8 ratio + Thinking · History, product evolution, milestones
+
+<img src="https://raw.githubusercontent.com/easy-to-use-ai/nano-banana-pro-mcp/main/assets/prompt-16-timeline.png" alt="Timeline Illustration" width="100%">
+
+### 17. `city_food_culture_card` — City × Food × Culture Fusion Card
+
+> 3D isometric + Thinking · Travel promotion, city IP, cultural content
+
+<img src="https://raw.githubusercontent.com/easy-to-use-ai/nano-banana-pro-mcp/main/assets/prompt-17-city-food-card.png" alt="City Food Culture Card" width="400">
 
 ---
 

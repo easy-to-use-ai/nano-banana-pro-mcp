@@ -328,4 +328,229 @@ IMPORTANT: Generate each scene one by one to maintain consistency. Reference the
       }];
     },
   },
+
+  // ── 11. 火柴人白板信息图 ───────────────────────────────
+  {
+    name: "whiteboard_infographic",
+    title: "Whiteboard Stickman Infographic",
+    description: "Generate an 'expert whiteboard teaching' style infographic with marker-drawn diagrams, stickman instructor, and clean visual hierarchy — perfect for article illustrations, tutorials, and social media explainers.",
+    arguments: [
+      { name: "topic", description: "Topic or content to visualize (e.g., 'How HTTP works', 'Machine Learning pipeline')", required: true },
+      { name: "language", description: "Text language: Chinese, English, or bilingual (default: bilingual)" },
+      { name: "density", description: "Information density: sparse, moderate, or dense (default: moderate)" },
+    ],
+    buildMessages: (args) => {
+      const topic = args.topic || "How AI image generation works";
+      const lang = args.language || "bilingual Chinese and English";
+      const density = args.density || "moderate";
+      const densityNote = density === "dense"
+        ? "Pack more details and data points into the diagram, minimal whitespace."
+        : density === "sparse"
+          ? "Keep very loose with 40%+ whitespace, only key concepts."
+          : "Maintain 30%+ whitespace, balance between detail and clarity.";
+      return [{
+        role: "user" as const,
+        content: {
+          type: "text" as const,
+          text: `Please use the generate_image tool with these parameters:
+- prompt: "Expert whiteboard teaching style infographic about '${topic}'. Clean white whiteboard or light gray grid paper background. Use marker-drawn lines, arrows, and boxes to build a flowchart or mind map. A simple stickman instructor in the corner pointing at key data. Title in bold handwritten style, body text as concise keywords using different colored markers (red, blue, black) to highlight priorities. ${densityNote} All text in ${lang}. Hand-drawn sketch aesthetic with marker pen texture."
+- aspectRatio: "16:9"
+- imageSize: "2K"`,
+        },
+      }];
+    },
+  },
+
+  // ── 12. 极简负空间封面设计 ──────────────────────────────
+  {
+    name: "minimalist_cover",
+    title: "Minimalist Negative Space Cover",
+    description: "Generate a minimalist negative space cover design with bold silhouette and limited colors — ideal for notebook covers, book jackets, brand stationery, and merchandise.",
+    arguments: [
+      { name: "subject", description: "Subject silhouette (e.g., flying bird, cat, mountain, flower)", required: true },
+      { name: "subject_color", description: "Color of the silhouette (e.g., white, black, red)" },
+      { name: "background_color", description: "Background color (e.g., deep green, navy blue, orange)" },
+      { name: "text", description: "Optional text to integrate into the design (e.g., a short phrase or title)" },
+    ],
+    buildMessages: (args) => {
+      const subject = args.subject || "flying bird";
+      const subjectColor = args.subject_color || "white";
+      const bgColor = args.background_color || "deep teal";
+      const textNote = args.text ? ` The text '${args.text}' is cleverly integrated into the design composition.` : "";
+      return [{
+        role: "user" as const,
+        content: {
+          type: "text" as const,
+          text: `Please use the generate_image tool with these parameters:
+- prompt: "Minimalist negative space design, ${subjectColor} ${subject} silhouette, ${bgColor} background. Flat vector illustration style, high contrast, clean composition, simple and elegant, modern graphic design. Use only 2-3 colors. Asymmetric layout, generous whitespace, sharp edges. Professional notebook cover design.${textNote}"
+- aspectRatio: "3:4"
+- imageSize: "2K"`,
+        },
+      }];
+    },
+  },
+
+  // ── 13. 竖版条漫 ──────────────────────────────────────
+  {
+    name: "vertical_comic_strip",
+    title: "Vertical Comic Strip (9:16)",
+    description: "Generate a 9:16 vertical comic strip with sequential panels flowing top to bottom — ideal for Webtoon-style comics, social media stories, and mobile-first content.",
+    arguments: [
+      { name: "story", description: "Story outline with panel descriptions", required: true },
+      { name: "panels", description: "Number of panels (e.g., 4, 6, 8, default: 6)" },
+      { name: "style", description: "Art style (e.g., Q-version cute, manga, chibi, pixel-art)" },
+      { name: "language", description: "Dialogue language (default: Chinese)" },
+    ],
+    buildMessages: (args) => {
+      const story = args.story || "A day in the life of an office worker: alarm, subway, lunch, drowning in emails, moonlit exit, phone in bed";
+      const panels = args.panels || "6";
+      const style = args.style || "Q-version cute chibi";
+      const lang = args.language || "Chinese";
+      return [{
+        role: "user" as const,
+        content: {
+          type: "text" as const,
+          text: `Please use the generate_image tool with these parameters:
+- prompt: "A ${panels}-panel vertical comic strip, ${style} art style. Story: ${story}. Panels flow from top to bottom in a single 9:16 vertical image. Each panel has a different pastel/macaron background color. Include speech bubbles with ${lang} dialogue. Characters maintain consistent design across all panels. Mix cute expressions with humorous scenes. Clear panel borders."
+- aspectRatio: "9:16"
+- imageSize: "2K"
+- thinkingConfig: {"thinkingLevel": "HIGH"}`,
+        },
+      }];
+    },
+  },
+
+  // ── 14. 电商产品套图 ──────────────────────────────────
+  {
+    name: "ecommerce_product_suite",
+    title: "E-Commerce Product Image Suite",
+    description: "Generate a complete set of product display images for e-commerce — main image, lifestyle scene, feature callouts, and size/scale reference. Upload a product photo as reference.",
+    arguments: [
+      { name: "product", description: "Product name and type (e.g., artisan perfume, wireless earbuds)", required: true },
+      { name: "selling_points", description: "Key selling points to highlight (e.g., natural ingredients, 40-hour battery)", required: true },
+      { name: "scene", description: "Lifestyle scene context (e.g., modern bathroom, outdoor adventure)" },
+      { name: "style", description: "Photography style (e.g., luxury minimalist, warm lifestyle, studio white)" },
+    ],
+    buildMessages: (args) => {
+      const product = args.product || "artisan perfume";
+      const points = args.selling_points || "natural botanical extracts, long-lasting fragrance, handcrafted glass bottle";
+      const scene = args.scene || "an elegant vanity table with soft morning light";
+      const style = args.style || "luxury minimalist";
+      return [{
+        role: "user" as const,
+        content: {
+          type: "text" as const,
+          text: `Generate a suite of e-commerce product images for ${product}. Use the generate_image tool for each of the following shots:
+
+**Shot 1 — Hero Main Image** (white background, product centered):
+- prompt: "${style} product photography of ${product} on pure white background. Studio lighting, sharp details, slight shadow for depth. Clean and professional, suitable as the main listing image."
+- aspectRatio: "1:1"
+- imageSize: "2K"
+
+**Shot 2 — Lifestyle Scene** (product in context):
+- prompt: "${product} placed in ${scene}. ${style} photography, natural lighting, shallow depth of field. The product is the clear focal point with complementary props."
+- aspectRatio: "1:1"
+- imageSize: "2K"
+
+**Shot 3 — Feature Callout** (key selling points annotated):
+- prompt: "Product feature infographic for ${product}. Clean layout showing the product with labeled callout lines pointing to key features: ${points}. Modern minimalist design with icons and brief text labels. White background."
+- aspectRatio: "1:1"
+- imageSize: "2K"
+
+If the user has a reference product photo, include it in the images array for each call.`,
+        },
+      }];
+    },
+  },
+
+  // ── 15. 品牌盲盒微缩小店 ──────────────────────────────
+  {
+    name: "blindbox_miniature_store",
+    title: "Brand Blind Box Miniature Store",
+    description: "Generate a 3D Q-version miniature store scene in blind box/figurine aesthetic — perfect for brand social media, fan merchandise concepts, and marketing campaigns.",
+    arguments: [
+      { name: "brand", description: "Brand or store name and type (e.g., 'Starbucks coffee shop', 'Nintendo game store')", required: true },
+      { name: "details", description: "Specific scene details (e.g., exterior style, window display, characters outside)" },
+      { name: "color_mood", description: "Color mood (e.g., warm afternoon, pastel spring, neon night)" },
+    ],
+    buildMessages: (args) => {
+      const brand = args.brand || "a cozy bookstore cafe";
+      const details = args.details || "Two-story mini building with large glass windows showing bookshelves and coffee bar inside. Q-version characters browsing books and sipping coffee outside.";
+      const mood = args.color_mood || "warm afternoon sunlight";
+      return [{
+        role: "user" as const,
+        content: {
+          type: "text" as const,
+          text: `Please use the generate_image tool with these parameters:
+- prompt: "3D Q-version miniature scene of ${brand}, blind box figurine aesthetic, Cinema 4D rendering quality. ${details} Soft ${mood} lighting, warm tones, macro photography-like shallow depth of field. The mini building is a detailed two-story structure. All characters are chibi-style with big heads, small bodies, PVC matte material finish. Highly detailed miniature world, tilt-shift effect."
+- aspectRatio: "1:1"
+- imageSize: "2K"
+- thinkingConfig: {"thinkingLevel": "HIGH"}`,
+        },
+      }];
+    },
+  },
+
+  // ── 16. 超长历史/产品时间线 ─────────────────────────────
+  {
+    name: "timeline_illustration",
+    title: "Ultra-Long Timeline Illustration",
+    description: "Generate an 8:1 or 1:8 ultra-long timeline illustration — ideal for historical timelines, product evolution, company milestones, and educational content.",
+    arguments: [
+      { name: "subject", description: "Timeline subject (e.g., 'Chinese dynasties from Xia to 2026', 'Evolution of smartphones')", required: true },
+      { name: "orientation", description: "horizontal (8:1) or vertical (1:8), default: horizontal" },
+      { name: "style", description: "Visual style (e.g., illustrated infographic, ink wash to modern gradient, flat design)" },
+      { name: "language", description: "Label language (default: Chinese)" },
+    ],
+    buildMessages: (args) => {
+      const subject = args.subject || "Chinese dynasties from Xia to 2026";
+      const orientation = args.orientation || "horizontal";
+      const ratio = orientation === "vertical" ? "1:8" : "8:1";
+      const flowDir = orientation === "vertical" ? "top to bottom" : "left to right";
+      const style = args.style || "illustrated infographic with color gradient from ancient bronze tones to modern vivid colors";
+      const lang = args.language || "Chinese";
+      return [{
+        role: "user" as const,
+        content: {
+          type: "text" as const,
+          text: `Please use the generate_image tool with these parameters:
+- prompt: "An ultra-long timeline illustration of ${subject}. Flowing ${flowDir}, each era/milestone represented by its most iconic visual element. ${style}. A continuous river/path serves as the time axis with labeled dates and milestones in ${lang}. Rich in detail with miniature scenes at each milestone point. Seamless transitions between periods."
+- aspectRatio: "${ratio}"
+- imageSize: "2K"
+- thinkingConfig: {"thinkingLevel": "HIGH"}`,
+        },
+      }];
+    },
+  },
+
+  // ── 17. 一城一味一句话 ─────────────────────────────────
+  {
+    name: "city_food_culture_card",
+    title: "City × Food × Culture Fusion Card",
+    description: "Generate a 3D isometric miniature scene fusing a city's landmark, signature food, and local culture into one card — perfect for travel promotion, city IP branding, and cultural content.",
+    arguments: [
+      { name: "city", description: "City name (e.g., Chengdu, Guangzhou, Tokyo)", required: true },
+      { name: "food", description: "Signature food (e.g., hotpot, dim sum, ramen)" },
+      { name: "landmark", description: "City landmark (e.g., Wide and Narrow Alleys, Canton Tower)" },
+      { name: "slogan", description: "Local slogan or dialect phrase to display in a speech bubble" },
+    ],
+    buildMessages: (args) => {
+      const city = args.city || "Chengdu";
+      const food = args.food || "boiling red-oil hotpot";
+      const landmark = args.landmark || "Wide and Narrow Alleys";
+      const slogan = args.slogan || "";
+      const sloganNote = slogan ? ` A speech bubble at the top reads '${slogan}'.` : "";
+      return [{
+        role: "user" as const,
+        content: {
+          type: "text" as const,
+          text: `Please use the generate_image tool with these parameters:
+- prompt: "3D isometric miniature scene of ${city}. A tiny city block model sitting on a surface, featuring a miniature ${landmark} as the centerpiece, with a giant ${food} as a prominent element. Q-version chibi characters are eating, walking, and enjoying the scene. Warm soft lighting, blind box figurine aesthetic, PVC matte material texture.${sloganNote} Highly detailed, tilt-shift photography effect, Cinema 4D rendering quality."
+- aspectRatio: "1:1"
+- imageSize: "2K"
+- thinkingConfig: {"thinkingLevel": "HIGH"}`,
+        },
+      }];
+    },
+  },
 ];

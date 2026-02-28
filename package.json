@@ -1,6 +1,6 @@
 {
   "name": "@easyuseai/nano-banana-pro-mcp",
-  "version": "3.1.0",
+  "version": "3.2.0",
   "description": "MCP server for Gemini image generation (supports Nano Banana Pro & Nano Banana 2)",
   "type": "module",
   "main": "dist/index.js",
