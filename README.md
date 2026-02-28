@@ -212,21 +212,6 @@ Analyze and describe images. Returns text only.
 
 The server includes **10 built-in prompt templates** showcasing best practices and creative workflows with Nano Banana 2's new features. AI agents can discover and use these via the MCP prompts protocol.
 
-| # | Prompt | Key Features Used | Use Case |
-|---|---|---|---|
-| 1 | `ultra_wide_panorama` | 8:1 ratio | Website banners, outdoor ads, wall art |
-| 2 | `weather_infographic` | Google Search | Real-time weather data visualization |
-| 3 | `ecommerce_banner` | 4:1 ratio | Product promotion banners |
-| 4 | `product_detail_long` | 1:4 ratio, Thinking | Mobile product detail pages |
-| 5 | `scroll_painting_panorama` | 8:1 ratio, Thinking | Chinese scroll painting style cityscapes |
-| 6 | `resize_and_enhance` | Flexible ratio | Resize & upscale existing images |
-| 7 | `character_multi_scene` | Consistency | Same character across multiple scenes |
-| 8 | `knowledge_card` | Google Search, Thinking | Illustrated species / knowledge cards |
-| 9 | `comic_storyboard` | Thinking, Consistency | Multi-panel comic storyboards |
-| 10 | `brand_logo_system` | 4K, Thinking | Brand logo & visual identity design |
-
-### Example Usage
-
 With Claude Desktop or any MCP-compatible client, you can select a prompt template and fill in the parameters:
 
 ```
@@ -235,6 +220,66 @@ Use the "scroll_painting_panorama" prompt:
   variant: ghibli
   resolution: 4K
 ```
+
+### 1. `ultra_wide_panorama` — Ultra-Wide City Panorama
+
+> 8:1 exclusive ratio · Website banners, outdoor ads, wall art
+
+<img src="https://raw.githubusercontent.com/easy-to-use-ai/nano-banana-pro-mcp/main/assets/prompt-01-ultra-wide-panorama.png" alt="Ultra-Wide Panorama" width="100%">
+
+### 2. `weather_infographic` — Real-Time Weather Infographic
+
+> Google Search grounding · Accurate real-time data visualization
+
+<img src="https://raw.githubusercontent.com/easy-to-use-ai/nano-banana-pro-mcp/main/assets/prompt-02-weather-infographic.png" alt="Weather Infographic" width="360">
+
+### 3. `ecommerce_banner` — E-Commerce Product Banner
+
+> 4:1 exclusive ratio · Product promotions, email campaigns
+
+<img src="https://raw.githubusercontent.com/easy-to-use-ai/nano-banana-pro-mcp/main/assets/prompt-03-ecommerce-banner.png" alt="E-Commerce Banner" width="100%">
+
+### 4. `product_detail_long` — Vertical Product Detail Page
+
+> 1:4 exclusive ratio + Thinking · Mobile product pages, Instagram stories
+
+<img src="https://raw.githubusercontent.com/easy-to-use-ai/nano-banana-pro-mcp/main/assets/prompt-04-product-detail-long.png" alt="Product Detail Long" width="240">
+
+### 5. `scroll_painting_panorama` — Chinese Scroll Painting Panorama
+
+> 8:1 ratio + Thinking · 清明上河图 style modern cityscapes
+
+<img src="https://raw.githubusercontent.com/easy-to-use-ai/nano-banana-pro-mcp/main/assets/prompt-05-scroll-painting.png" alt="Scroll Painting Panorama" width="100%">
+
+### 6. `resize_and_enhance` — Resize & Enhance Image
+
+> 14 flexible ratios · Adapt content across platforms
+
+<img src="https://raw.githubusercontent.com/easy-to-use-ai/nano-banana-pro-mcp/main/assets/prompt-06-resize-enhance.png" alt="Resize and Enhance" width="100%">
+
+### 7. `character_multi_scene` — Character Consistency Multi-Scene
+
+> Enhanced consistency · Storyboards, virtual influencer content
+
+<img src="https://raw.githubusercontent.com/easy-to-use-ai/nano-banana-pro-mcp/main/assets/prompt-07-character-scene.png" alt="Character Multi-Scene" width="100%">
+
+### 8. `knowledge_card` — Search-Grounded Knowledge Card
+
+> Google Search + Thinking · Educational content, species profiles
+
+<img src="https://raw.githubusercontent.com/easy-to-use-ai/nano-banana-pro-mcp/main/assets/prompt-08-knowledge-card.png" alt="Knowledge Card" width="400">
+
+### 9. `comic_storyboard` — Comic / Storyboard Panels
+
+> Thinking + Consistency · Webcomics, pitch decks
+
+<img src="https://raw.githubusercontent.com/easy-to-use-ai/nano-banana-pro-mcp/main/assets/prompt-09-comic-storyboard.png" alt="Comic Storyboard" width="400">
+
+### 10. `brand_logo_system` — Brand Logo & Visual Identity
+
+> 4K + Thinking · Logo design, brand identity sheets
+
+<img src="https://raw.githubusercontent.com/easy-to-use-ai/nano-banana-pro-mcp/main/assets/prompt-10-brand-logo.png" alt="Brand Logo System" width="100%">
 
 ---
 

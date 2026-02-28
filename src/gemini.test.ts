@@ -230,7 +230,7 @@ describe("GeminiImageClient", () => {
       expect(body.tools).toBeUndefined();
     });
 
-    it("should pass personGeneration to imageConfig", async () => {
+    it("should accept personGeneration option without error", async () => {
       const mockResponse = {
         candidates: [
           {
@@ -249,15 +249,12 @@ describe("GeminiImageClient", () => {
       } as Response);
 
       const client = new GeminiImageClient(mockApiKey);
-      await client.generateImage({
+      const result = await client.generateImage({
         prompt: "a crowd scene",
         personGeneration: "ALLOW_ALL",
       });
 
-      const callArgs = vi.mocked(fetch).mock.calls[0];
-      const body = JSON.parse(callArgs[1]?.body as string);
-
-      expect(body.generationConfig.imageConfig.personGeneration).toBe("ALLOW_ALL");
+      expect(result.base64Data).toBe("base64data");
     });
 
     it("should pass thinkingConfig to generationConfig", async () => {

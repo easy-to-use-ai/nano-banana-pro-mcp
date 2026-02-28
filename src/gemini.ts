@@ -62,12 +62,11 @@ export class GeminiImageClient {
       ],
       generationConfig: {
         responseModalities: ["TEXT", "IMAGE"],
-        ...(supportsImageConfig && (aspectRatio || imageSize || personGeneration)
+        ...(supportsImageConfig && (aspectRatio || imageSize)
           ? {
               imageConfig: {
                 ...(aspectRatio && { aspectRatio }),
                 ...(imageSize && { imageSize }),
-                ...(personGeneration && { personGeneration }),
               },
             }
           : {}),
